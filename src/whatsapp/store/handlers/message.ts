@@ -3,7 +3,7 @@ import { jidNormalizedUser, toNumber } from "baileys";
 import type { BaileysEventHandler, MakeTransformedPrisma } from "@/types";
 import { transformPrisma, logger, emitEvent } from "@/utils";
 import { prisma } from "@/config/database";
-import type { Message } from "@prisma/client";
+import type { Message, Prisma } from "@prisma/client";
 
 const getKeyAuthor = (key: WAMessageKey | undefined | null) =>
 	(key?.fromMe ? "me" : key?.participant || key?.remoteJid) || "";
@@ -17,19 +17,26 @@ export default function messageHandler(sessionId: string, event: BaileysEventEmi
 			await prisma.$transaction(async (tx) => {
 				if (isLatest) await tx.message.deleteMany({ where: { sessionId } });
 
-				const processedMessages = messages.map((message) => ({
-					...(transformPrisma(message) as MakeTransformedPrisma<Message>),
-					remoteJid: message.key.remoteJid!,
-					id: message.key.id!,
-					sessionId,
-				}));
+				const processedMessages = messages.map((message) => {
+					const transformed = transformPrisma(message) as MakeTransformedPrisma<Message>;
+					return {
+						...transformed,
+						remoteJid: message.key.remoteJid!,
+						id: message.key.id!,
+						sessionId,
+						futureproofData: transformed.futureproofData ? Buffer.from(transformed.futureproofData.toString()) : null,
+						messageSecret: transformed.messageSecret ? Buffer.from(transformed.messageSecret.toString()) : null,
+						mediaCiphertextSha256: transformed.mediaCiphertextSha256 ? Buffer.from(transformed.mediaCiphertextSha256.toString()) : null
+					} satisfies Prisma.MessageCreateManyInput;
+				});
+
 				await tx.message.createMany({
 					data: processedMessages,
 				});
 				emitEvent("messages.upsert", sessionId, { messages: processedMessages });
 			});
 			logger.info({ messages: messages.length }, "Synced messages");
-		} catch (e) {
+		} catch (e: any) {
 			logger.error(e, "An error occured during messages set");
 			emitEvent(
 				"messages.upsert",
@@ -48,7 +55,13 @@ export default function messageHandler(sessionId: string, event: BaileysEventEmi
 				for (const message of messages) {
 					try {
 						const jid = jidNormalizedUser(message.key.remoteJid!);
-						const data = transformPrisma(message) as MakeTransformedPrisma<Message>;
+						const transformed = transformPrisma(message) as MakeTransformedPrisma<Message>;
+						const data = {
+							...transformed,
+							futureproofData: transformed.futureproofData ? Buffer.from(transformed.futureproofData.toString()) : null,
+							messageSecret: transformed.messageSecret ? Buffer.from(transformed.messageSecret.toString()) : null,
+							mediaCiphertextSha256: transformed.mediaCiphertextSha256 ? Buffer.from(transformed.mediaCiphertextSha256.toString()) : null
+						} satisfies Prisma.MessageCreateInput;
 
 						await model.upsert({
 							select: { pkId: true },
@@ -80,7 +93,7 @@ export default function messageHandler(sessionId: string, event: BaileysEventEmi
 								},
 							]);
 						}
-					} catch (e) {
+					} catch (e: any) {
 						logger.error(e, "An error occured during message upsert");
 						emitEvent(
 							"messages.upsert",
@@ -118,19 +131,24 @@ export default function messageHandler(sessionId: string, event: BaileysEventEmi
 						},
 					});
 
+					const transformed = transformPrisma(data) as MakeTransformedPrisma<Message>;
 					const processedMessage = {
-						...(transformPrisma(data) as MakeTransformedPrisma<Message>),
+						...transformed,
 						id: data.key.id!,
 						remoteJid: data.key.remoteJid!,
 						sessionId,
-					};
+						futureproofData: transformed.futureproofData ? Buffer.from(transformed.futureproofData.toString()) : null,
+						messageSecret: transformed.messageSecret ? Buffer.from(transformed.messageSecret.toString()) : null,
+						mediaCiphertextSha256: transformed.mediaCiphertextSha256 ? Buffer.from(transformed.mediaCiphertextSha256.toString()) : null
+					} satisfies Prisma.MessageCreateInput;
+
 					await tx.message.create({
 						select: { pkId: true },
 						data: processedMessage,
 					});
 					emitEvent("messages.update", sessionId, { messages: processedMessage });
 				});
-			} catch (e) {
+			} catch (e: any) {
 				logger.error(e, "An error occured during message update");
 				emitEvent(
 					"messages.update",
@@ -156,7 +174,7 @@ export default function messageHandler(sessionId: string, event: BaileysEventEmi
 				where: { id: { in: item.keys.map((k) => k.id!) }, remoteJid: jid, sessionId },
 			});
 			emitEvent("messages.delete", sessionId, { message: item });
-		} catch (e) {
+		} catch (e: any) {
 			logger.error(e, "An error occured during message delete");
 			emitEvent(
 				"messages.delete",
@@ -183,8 +201,7 @@ export default function messageHandler(sessionId: string, event: BaileysEventEmi
 						);
 					}
 
-					let userReceipt = (message.userReceipt ||
-						[]) as unknown as MessageUserReceipt[];
+					let userReceipt = (message.userReceipt || []) as unknown as MessageUserReceipt[];
 					const recepient = userReceipt.find((m) => m.userJid === receipt.userJid);
 
 					if (recepient) {
@@ -209,7 +226,7 @@ export default function messageHandler(sessionId: string, event: BaileysEventEmi
 					});
 					emitEvent("message-receipt.update", sessionId, { message: { key, receipt } });
 				});
-			} catch (e) {
+			} catch (e: any) {
 				logger.error(e, "An error occured during message receipt update");
 				emitEvent(
 					"message-receipt.update",
@@ -256,7 +273,7 @@ export default function messageHandler(sessionId: string, event: BaileysEventEmi
 					});
 					emitEvent("messages.reaction", sessionId, { message: { key, reaction } });
 				});
-			} catch (e) {
+			} catch (e: any) {
 				logger.error(e, "An error occured during message reaction update");
 				emitEvent(
 					"messages.reaction",

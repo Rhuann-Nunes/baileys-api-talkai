@@ -130,7 +130,7 @@ class WhatsappService {
 						emitEvent("qrcode.updated", sessionId, { qr });
 						res.status(200).json({ qr });
 						return;
-					} catch (e) {
+					} catch (e: any) {
 						logger.error(e, "An error occurred during QR generation");
 						emitEvent(
 							"qrcode.updated",
@@ -152,7 +152,7 @@ class WhatsappService {
 				try {
 					WhatsappService.updateWaConnection(sessionId, WAStatus.WaitQrcodeAuth);
 					qr = await toDataURL(connectionState.qr);
-				} catch (e) {
+				} catch (e: any) {
 					logger.error(e, "An error occurred during QR generation");
 					emitEvent(
 						"qrcode.updated",
@@ -258,7 +258,8 @@ class WhatsappService {
 
 	static getSessionStatus(session: Session) {
 		const state = ["CONNECTING", "CONNECTED", "DISCONNECTING", "DISCONNECTED"];
-		let status = state[(session.ws as WebSocketType).readyState];
+		const ws = session.ws as unknown as WebSocketType;
+		let status = state[ws.readyState];
 		status = session.user ? "AUTHENTICATED" : status;
 		return session.waStatus !== WAStatus.Unknown ? session.waStatus : status.toLowerCase();
 	}

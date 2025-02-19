@@ -1,18 +1,6 @@
 version: '3.8'
 
 services:
-  baileys-db:
-    image: postgres
-    container_name: baileys-db
-    environment:
-      POSTGRES_PASSWORD: 2024pass
-      POSTGRES_DB: bailey
-    ports:
-      - "5432:5432"  # Exportado apenas para demonstração, remova em produção
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks: 
-      - wpp-net
   baileys-api:
     container_name: baileys-api
     build:
@@ -25,15 +13,20 @@ services:
     ports:
       - "3000:3000"
     environment:
-      DATABASE_URL: postgres://postgres:2024pass@baileys-db:5432/bailey
-    depends_on:
-      - baileys-db
-    networks: 
-      - wpp-net
+      DATABASE_URL: ${DATABASE_URL}
+      DIRECT_URL: ${DIRECT_URL}
+      NODE_ENV: ${NODE_ENV}
+      PORT: ${PORT}
+      URL_WEBHOOK: ${URL_WEBHOOK}
+      ENABLE_WEBHOOK: ${ENABLE_WEBHOOK}
+      ENABLE_WEBSOCKET: ${ENABLE_WEBSOCKET}
+      BOT_NAME: ${BOT_NAME}
+      LOG_LEVEL: ${LOG_LEVEL}
+      RECONNECT_INTERVAL: ${RECONNECT_INTERVAL}
+      MAX_RECONNECT_RETRIES: ${MAX_RECONNECT_RETRIES}
+      SSE_MAX_QR_GENERATION: ${SSE_MAX_QR_GENERATION}
+      SESSION_CONFIG_ID: ${SESSION_CONFIG_ID}
+      API_KEY: ${API_KEY}
 
 volumes:
-  postgres_data:
   prisma:
-networks:
-  wpp-net:
-    driver: bridge

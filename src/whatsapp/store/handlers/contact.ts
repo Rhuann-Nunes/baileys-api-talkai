@@ -10,14 +10,6 @@ export default function contactHandler(sessionId: string, event: BaileysEventEmi
 
 	const set: BaileysEventHandler<"messaging-history.set"> = async ({ contacts }) => {
 		try {
-			// const contactIds = contacts.map((c) => c.id);
-			// const deletedOldContactIds = (
-			// 	await prisma.contact.findMany({
-			// 		select: { id: true },
-			// 		where: { id: { notIn: contactIds }, sessionId },
-			// 	})
-			// ).map((c) => c.id);
-
 			const processedContacts = contacts.map((c) => transformPrisma(c));
 			const upsertPromises = processedContacts.map((data) =>
 				model.upsert({
@@ -28,14 +20,10 @@ export default function contactHandler(sessionId: string, event: BaileysEventEmi
 				}),
 			);
 
-			await Promise.any([
-				...upsertPromises,
-				//danger: contacts come with several patches of N contacts, deleting those that are not in this patch ends up deleting those received in the previous patch
-				//prisma.contact.deleteMany({ where: { id: { in: deletedOldContactIds }, sessionId } }),
-			]);
+			await Promise.any([...upsertPromises]);
 			logger.info({ newContacts: contacts.length }, "Synced contacts");
 			emitEvent("contacts.set", sessionId, { contacts: processedContacts });
-		} catch (e) {
+		} catch (e: any) {
 			logger.error(e, "An error occured during contacts set");
 			emitEvent(
 				"contacts.set",
@@ -49,8 +37,8 @@ export default function contactHandler(sessionId: string, event: BaileysEventEmi
 
 	const upsert: BaileysEventHandler<"contacts.upsert"> = async (contacts) => {
 		try {
-			console.info(`Received ${contacts.length} contacts for upsert.`); // Informative message
-			console.info(contacts[0]); // Informative message
+			console.info(`Received ${contacts.length} contacts for upsert.`);
+			console.info(contacts[0]);
 
 			if (contacts.length === 0) {
 				return;
@@ -64,10 +52,10 @@ export default function contactHandler(sessionId: string, event: BaileysEventEmi
 				}));
 			await model.createMany({
 				data: processedContacts,
-				skipDuplicates: true, // Prevent duplicate inserts
+				skipDuplicates: true,
 			});
 			emitEvent("contacts.upsert", sessionId, { contacts: processedContacts });
-		} catch (error) {
+		} catch (error: any) {
 			logger.error("An unexpected error occurred during contacts upsert", error);
 			emitEvent(
 				"contacts.upsert",
@@ -91,7 +79,7 @@ export default function contactHandler(sessionId: string, event: BaileysEventEmi
 					},
 				});
 				emitEvent("contacts.update", sessionId, { contacts: data });
-			} catch (e) {
+			} catch (e: any) {
 				if (e instanceof PrismaClientKnownRequestError && e.code === "P2025") {
 					return logger.info({ update }, "Got update for non existent contact");
 				}
