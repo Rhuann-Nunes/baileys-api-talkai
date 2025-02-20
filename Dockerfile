@@ -10,8 +10,8 @@ WORKDIR /app
 # Copy package files first for better caching
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Install ALL dependencies (including devDependencies)
+RUN npm ci
 
 # Copy Prisma schema
 COPY prisma ./prisma/
@@ -24,6 +24,9 @@ COPY . .
 
 # Build the application
 RUN npm run build
+
+# Remove development dependencies
+RUN npm ci --only=production
 
 # Expose the port
 EXPOSE 3000
