@@ -1,22 +1,27 @@
-FROM node:20-alpine AS builder
+FROM node:18-slim
+
+# Install OpenSSL and other dependencies
+RUN apt-get update && apt-get install -y \
+    openssl \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-COPY package*.json .
+# Copy package files
+COPY package*.json ./
+COPY prisma ./prisma/
 
-# Install git
-RUN apk add --no-cache git
+# Install dependencies
+RUN npm install
 
-RUN npm install --quiet
-
-RUN npx prisma migrate
-
+# Copy the rest of the application
 COPY . .
 
-# Executa o build da aplicação (gera a pasta dist com main.js, entre outros)
+# Build the application
 RUN npm run build
 
+# Expose the port
 EXPOSE 3000
 
-# Inicia a aplicação em ambiente de produção (executa "node dist/main.js")
-CMD [ "npm", "run", "start" ]
+# Start the application
+CMD ["npm", "run", "prod"]

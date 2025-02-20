@@ -1,9 +1,11 @@
 [build]
 builder = "nixpacks"
-buildCommand = "npm ci && npm run build"
+buildCommand = "npm run build"
 
 [deploy]
-startCommand = "node dist/main.js"
+startCommand = "npm run start"
 healthcheckPath = "/"
 healthcheckTimeout = 100
-restartPolicyType = "on_failure" 
+
+[build.env]
+NIXPACKS_PKGS = "openssl" 
