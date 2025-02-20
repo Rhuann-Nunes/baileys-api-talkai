@@ -7,7 +7,6 @@
 		"clean": "rimraf dist",
 		"build": "npm run clean && prisma generate && tsc -p tsconfig.json && tscpaths -p tsconfig.json -s ./src -o ./dist",
 		"start": "node dist/main.js",
-		"prod": "npm run build && npm start",
 		"dev": "nodemon",
 		"lint": "eslint . --ext .ts",
 		"format": "prettier . --write",

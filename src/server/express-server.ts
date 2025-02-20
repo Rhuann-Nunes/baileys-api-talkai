@@ -10,6 +10,7 @@ export class ExpressServer {
 		this.app = express();
 		this.setupMiddleware();
 		this.setupRoutes();
+		this.setupErrorHandling();
 	}
 
 	private setupMiddleware() {
@@ -19,10 +20,19 @@ export class ExpressServer {
 
 	private setupRoutes() {
 		this.app.use("/", routes);
+	}
 
-		this.app.all("*", (_: Request, res: Response) =>
-			res.status(404).json({ error: "URL not found" }),
-		);
+	private setupErrorHandling() {
+		// Handle 404
+		this.app.use((_: Request, res: Response) => {
+			res.status(404).json({ error: "URL not found" });
+		});
+
+		// Handle other errors
+		this.app.use((err: any, _: Request, res: Response) => {
+			console.error(err);
+			res.status(500).json({ error: "Internal server error" });
+		});
 	}
 
 	public getApp(): Application {

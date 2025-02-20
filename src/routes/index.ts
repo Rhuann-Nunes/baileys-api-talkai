@@ -7,6 +7,12 @@ import contactRoutes from "./contacts";
 import { apiKeyValidator } from "@/middlewares/api-key-validator";
 
 const router = Router();
+
+// Add healthcheck route
+router.get("/", (_, res) => {
+  res.json({ status: "ok", timestamp: new Date().toISOString() });
+});
+
 router.use("/sessions", sessionRoutes);
 router.use("/:sessionId/chats", apiKeyValidator, chatRoutes);
 router.use("/:sessionId/contacts", apiKeyValidator, contactRoutes);
