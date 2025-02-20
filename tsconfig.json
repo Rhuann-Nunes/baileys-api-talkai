@@ -13,6 +13,7 @@
 		"removeComments": true,
 		"sourceMap": true,
 		"baseUrl": ".",
+		"lib": ["ES2021"],
 		"paths": {
 			"@/*": ["src/*"]
 		}

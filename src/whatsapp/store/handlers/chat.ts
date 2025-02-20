@@ -60,20 +60,21 @@ export default function chatHandler(sessionId: string, event: BaileysEventEmitte
 				chats
 					.map((c) => {
 						const transformed = transformPrisma(c) as MakeTransformedPrisma<Chat>;
-						return {
+						const data = {
 							...transformed,
-							contactPrimaryIdentityKey: transformed.contactPrimaryIdentityKey ? Buffer.from(transformed.contactPrimaryIdentityKey.toString()) : null,
-							tcToken: transformed.tcToken ? Buffer.from(transformed.tcToken.toString()) : null
+							contactPrimaryIdentityKey: transformed.contactPrimaryIdentityKey ? Buffer.from(transformed.contactPrimaryIdentityKey.toString()) : undefined,
+							tcToken: transformed.tcToken ? Buffer.from(transformed.tcToken.toString()) : undefined
 						} satisfies Prisma.ChatCreateInput;
+						return { data, transformed };
 					})
-					.map((data) => {
+					.map(({ data, transformed }) => {
 						model.upsert({
 							select: { pkId: true },
 							create: { ...data, sessionId },
 							update: data,
 							where: { sessionId_id: { id: data.id, sessionId } },
 						});
-						results.push(data);
+						results.push(transformed);
 					}),
 			);
 			emitEvent("chats.upsert", sessionId, { chats: results });
