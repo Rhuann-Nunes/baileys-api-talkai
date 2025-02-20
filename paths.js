@@ -1,10 +1,11 @@
 const tsConfigPaths = require('tsconfig-paths');
-const tsConfig = require('./tsconfig.json');
+const { resolve } = require('path');
 
-const baseUrl = './dist';
-tsConfigPaths.register({
+const baseUrl = resolve(__dirname, 'dist');
+const cleanup = tsConfigPaths.register({
     baseUrl,
-    paths: {
-        '@/*': ['*']
-    },
-}); 
+    paths: { '@/*': ['*'] }
+});
+
+// Cleanup when the module is unloaded
+process.on('exit', cleanup); 
