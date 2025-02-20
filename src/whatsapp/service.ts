@@ -56,15 +56,9 @@ class WhatsappService {
 		}
 	}
 
-	private static shouldReconnect(sessionId: string) {
-		let attempts = WhatsappService.retries.get(sessionId) ?? 0;
-
-		if (attempts < env.MAX_RECONNECT_RETRIES) {
-			attempts += 1;
-			WhatsappService.retries.set(sessionId, attempts);
-			return true;
-		}
-		return false;
+	private static shouldReconnect(sessionId: string): boolean {
+		const attempts = WhatsappService.retries.get(sessionId) ?? 0;
+		return attempts < (env.MAX_RECONNECT_RETRIES ?? 5);
 	}
 
 	static async createSession(options: createSessionOptions) {
@@ -168,7 +162,7 @@ class WhatsappService {
 			if (
 				!res ||
 				res.writableEnded ||
-				(qr && currentGenerations >= env.SSE_MAX_QR_GENERATION)
+				(qr && currentGenerations >= (env.SSE_MAX_QR_GENERATION ?? 5))
 			) {
 				res && !res.writableEnded && res.end();
 				destroy();
@@ -286,12 +280,12 @@ class WhatsappService {
 	static async validJid(session: Session, jid: string, type: "group" | "number" = "number") {
 		try {
 			if (type === "number") {
-				const [result] = await session.onWhatsApp(jid);
-				if(result?.exists) {
-					return result.jid;
-				} else {
-					return null;
+				const result = await session.onWhatsApp(jid);
+				if (!result?.[0]) return null;
+				if (result[0].exists) {
+					return result[0].jid;
 				}
+				return null;
 			}
 
 			const groupMeta = await session.groupMetadata(jid);

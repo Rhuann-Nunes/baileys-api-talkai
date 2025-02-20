@@ -7,7 +7,7 @@ import { initializeSocketEmitter } from "@/utils";
 
 export class Server {
 	private httpServer: ExpressServer;
-	private socketServer: SocketServer;
+	private socketServer?: SocketServer;
 	private httpPort = env.PORT;
 	private server: http.Server;
 

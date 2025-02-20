@@ -5,9 +5,10 @@
 	"main": "dist/main.js",
 	"scripts": {
 		"clean": "rimraf dist",
-		"build": "npm run clean && prisma generate && tsc -p tsconfig.json && cp -r src/prisma dist/",
+		"build": "npm run clean && prisma generate && tsc -p tsconfig.json && tscpaths -p tsconfig.json -s ./src -o ./dist",
 		"start": "node dist/main.js",
-		"dev": "nodemon src/main.ts",
+		"prod": "npm run build && npm start",
+		"dev": "nodemon",
 		"lint": "eslint . --ext .ts",
 		"format": "prettier . --write",
 		"postinstall": "prisma generate",
@@ -64,7 +65,6 @@
 		"rimraf": "^5.0.5",
 		"socket.io": "^4.7.5",
 		"ts-node": "^10.9.2",
-		"tsconfig-paths": "^4.2.0",
 		"typescript": "^5.3.3",
 		"ws": "^8.16.0",
 		"zod": "^3.23.8"
@@ -83,6 +83,7 @@
 		"nodemon": "^3.0.3",
 		"prettier": "^3.2.5",
 		"prettier-plugin-organize-imports": "^3.2.4",
+		"tsconfig-paths": "4.2.0",
 		"tscpaths": "^0.0.9"
 	},
 	"engines": {
