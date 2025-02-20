@@ -8,12 +8,17 @@ import { apiKeyValidator } from "@/middlewares/api-key-validator";
 
 const router = Router();
 
-// Add healthcheck route
+// Health check route - no authentication required
 router.get("/", (_, res) => {
-  res.json({ status: "ok", timestamp: new Date().toISOString() });
+  res.status(200).json({
+    status: "ok",
+    service: "baileys-api",
+    timestamp: new Date().toISOString()
+  });
 });
 
-router.use("/sessions", sessionRoutes);
+// Protected routes
+router.use("/sessions", apiKeyValidator, sessionRoutes);
 router.use("/:sessionId/chats", apiKeyValidator, chatRoutes);
 router.use("/:sessionId/contacts", apiKeyValidator, contactRoutes);
 router.use("/:sessionId/groups", apiKeyValidator, groupRoutes);

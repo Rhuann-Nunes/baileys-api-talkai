@@ -4,7 +4,7 @@ buildCommand = "npm run build"
 
 [deploy]
 startCommand = "npm run start"
-healthcheckPath = "/sessions"
+healthcheckPath = "/"
 healthcheckTimeout = 100
 
 [build.env]
