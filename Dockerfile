@@ -7,12 +7,17 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-# Copy package files
+# Copy package files first for better caching
 COPY package*.json ./
-COPY prisma ./prisma/
 
 # Install dependencies
-RUN npm install
+RUN npm ci --only=production
+
+# Copy Prisma schema
+COPY prisma ./prisma/
+
+# Generate Prisma Client
+RUN npx prisma generate
 
 # Copy the rest of the application
 COPY . .
@@ -23,5 +28,8 @@ RUN npm run build
 # Expose the port
 EXPOSE 3000
 
+# Set production environment
+ENV NODE_ENV=production
+
 # Start the application
-CMD ["npm", "run", "prod"]
+CMD ["npm", "run", "start"]
