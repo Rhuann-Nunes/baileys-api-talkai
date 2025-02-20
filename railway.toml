@@ -3,7 +3,7 @@ builder = "nixpacks"
 buildCommand = "npm ci && npm run build"
 
 [deploy]
-startCommand = "NODE_PATH=dist node -r ./paths.js dist/main.js"
+startCommand = "node -r ./paths.js dist/main.js"
 healthcheckPath = "/"
 healthcheckTimeout = 100
 restartPolicyType = "on_failure" 
